@@ -1,64 +1,40 @@
 const admin = require("firebase-admin");
 
+// Fungsi helper untuk memformat Private Key (Penting untuk Vercel)
 function formatPrivateKey(key) {
   if (!key) return null;
-
-  // 1. Bersihkan semua tanda kutip ganda jika ada
-  let rawKey = key.replace(/"/g, '');
-
-  // 2. Definisikan Header dan Footer standar
-  const header = "-----BEGIN PRIVATE KEY-----";
-  const footer = "-----END PRIVATE KEY-----";
-
-  // 3. Jika kunci tidak memiliki header/footer, anggap itu sudah rusak atau format lain
-  if (!rawKey.includes(header) || !rawKey.includes(footer)) {
-    // Kembalikan apa adanya dengan perbaikan baris baru standar sebagai fallback
-    return rawKey.replace(/\\n/g, '\n');
-  }
-
-  // 4. Ektrak HANYA bagian Base64 (isi kuncinya)
-  // Kita buang header, footer, spasi, dan enter lama untuk mendapatkan string bersih
-  const content = rawKey
-    .replace(header, "")
-    .replace(footer, "")
-    .replace(/\\n/g, "") // Hapus literal \n
-    .replace(/\s/g, ""); // Hapus semua spasi/enter asli
-
-  // 5. Susun ulang kunci dengan format yang DIJAMIN benar
-  // Header + Enter + Isi Bersih + Enter + Footer
-  return `${header}\n${content}\n${footer}\n`;
+  return key.replace(/\\n/g, '\n'); // Mengubah literal \n menjadi newline asli
 }
 
-if (!admin.apps.length) {
-  try {
+try {
+  // Cek apakah Firebase sudah di-init sebelumnya (untuk mencegah double-init di serverless)
+  if (!admin.apps.length) {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-    
-    if (!privateKey) throw new Error("Private Key tidak ditemukan di Environment Variables");
+
+    // Validasi ketat: Jika env var hilang, stop proses sekarang.
+    if (!projectId || !clientEmail || !privateKey) {
+      throw new Error("Missing Firebase Environment Variables (PROJECT_ID, CLIENT_EMAIL, or PRIVATE_KEY)");
+    }
 
     admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
+        projectId,
+        clientEmail,
+        privateKey,
       }),
     });
-    console.log("✅ Firebase berhasil diinisialisasi ulang!");
-    
-  } catch (error) {
-    console.error("❌ Gagal Inisialisasi Firebase (Critical):", error.message);
-    // Log error detail untuk debugging di Vercel
-    if (error.errorInfo) console.error(JSON.stringify(error.errorInfo));
+    console.log("✅ Firebase initialized successfully");
   }
+} catch (error) {
+  console.error("❌ Firebase Init Error:", error.message);
+  // Di Vercel, kita biarkan ini throw agar deployment gagal & kita sadar ada yang salah
+  throw error; 
 }
 
-// Inisialisasi service
-// Gunakan try-catch agar jika init gagal, export tidak langsung crash saat require
-let db, auth;
-try {
-  db = admin.firestore();
-  auth = admin.auth();
-} catch (e) {
-  console.error("Service Firestore/Auth belum siap:", e.message);
-}
+// Export langsung (karena jika sampai sini, admin pasti sudah ready)
+const db = admin.firestore();
+const auth = admin.auth();
 
 module.exports = { db, auth };

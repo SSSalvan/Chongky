@@ -4,6 +4,9 @@ const { db } = require('./firebase');
 
 router.get('/', async (req, res) => {
   try {
+    // Safety check
+    if (!db) throw new Error("Database connection not ready");
+
     const { id, type, category } = req.query;
 
     // CASE A: Get single food by ID
@@ -16,6 +19,7 @@ router.get('/', async (req, res) => {
     // CASE B: Get list of foods
     let query = db.collection('fooditems');
     
+    // Support filter (type or category) - case insensitive handling
     const filterValue = type || category;
     if (filterValue) {
       query = query.where('mealType', '==', filterValue.toLowerCase());
@@ -30,8 +34,8 @@ router.get('/', async (req, res) => {
     res.status(200).json(foods);
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error("Error in GET /foods:", error.message);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
 

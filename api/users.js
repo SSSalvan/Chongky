@@ -2,24 +2,26 @@ const express = require('express');
 const router = express.Router();
 const { db, auth } = require('./firebase');
 
-// Helper: Verify Token Middleware
+// Middleware: Verify Token
 const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Unauthorized');
+      return res.status(401).json({ message: 'Unauthorized' });
     }
     const token = authHeader.split('Bearer ')[1];
     req.user = await auth.verifyIdToken(token);
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Unauthorized: No valid token' });
+    console.error("Auth Error:", error.message);
+    return res.status(403).json({ message: 'Forbidden', error: error.message });
   }
 };
 
+// Terapkan middleware ke semua rute DI BAWAH baris ini
 router.use(verifyToken);
 
-// GET: List users or get single user
+// GET: Get user info
 router.get('/', async (req, res) => {
   try {
     const { id } = req.query;
@@ -28,44 +30,43 @@ router.get('/', async (req, res) => {
       if (!doc.exists) return res.status(404).json({ message: 'User not found' });
       return res.status(200).json({ id: doc.id, ...doc.data() });
     }
-
+    
+    // Hati-hati mengambil semua user di production!
     const snap = await db.collection('users').get();
     const data = [];
     snap.forEach(d => data.push({ id: d.id, ...d.data() }));
     res.status(200).json(data);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: e.message });
   }
 });
 
-// POST: Create new user
+// POST: Create/Overwrite User
 router.post('/', async (req, res) => {
   try {
     const { id } = req.query;
-    if (!id) return res.status(400).json({ message: 'Query id required, example ?id=7' });
+    if (!id) return res.status(400).json({ message: 'Query id required' });
     
-    const { name, status, email, ...otherData } = req.body || {};
-    if (!name) return res.status(400).json({ message: 'Field name is required' });
-
-    const ref = db.collection('users').doc(id);
-    if ((await ref.get()).exists) {
+    const { name, email, ...otherData } = req.body || {};
+    
+    const userRef = db.collection('users').doc(id);
+    const doc = await userRef.get();
+    
+    if (doc.exists) {
       return res.status(409).json({ message: `User ${id} already exists` });
     }
 
-    await ref.set({
+    await userRef.set({
       id,
-      name,
-      status: status || 'active',
-      email: email || null,
-      createdAt: Date.now(),
+      name: name || 'No Name',
+      email: email || req.user.email || null, // Ambil dari token jika body kosong
+      createdAt: new Date().toISOString(),
       ...otherData
     });
 
     res.status(201).json({ message: 'User created', id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -75,30 +76,14 @@ router.patch('/', async (req, res) => {
     const { id } = req.query;
     if (!id) return res.status(400).json({ message: 'Query id required' });
     
-    const body = req.body || {};
-    if (!Object.keys(body).length) {
+    if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({ message: 'Body cannot be empty' });
     }
 
-    await db.collection('users').doc(id).update(body);
-    res.status(200).json({ message: `User ${id} updated`, data: body });
+    await db.collection('users').doc(id).update(req.body);
+    res.status(200).json({ message: 'User updated' });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// DELETE: Delete user
-router.delete('/', async (req, res) => {
-  try {
-    const { id } = req.query;
-    if (!id) return res.status(400).json({ message: 'Query id required' });
-    
-    await db.collection('users').doc(id).delete();
-    res.status(200).json({ message: `User ${id} deleted` });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: e.message });
   }
 });
 
