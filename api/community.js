@@ -26,8 +26,16 @@ router.get('/', async (req, res) => {
       return res.status(500).json({ message: 'Database not initialized' });
     }
 
-    const postsRef = db.collection('posts').orderBy('timestamp', 'desc');
-    const snapshot = await postsRef.get();
+    const postsRef = db.collection('posts');
+    
+    // Try orderBy, but fallback if fails
+    let snapshot;
+    try {
+      snapshot = await postsRef.orderBy('timestamp', 'desc').get();
+    } catch (e) {
+      console.warn("⚠️ orderBy failed, fetching all posts without sorting:", e.message);
+      snapshot = await postsRef.get();
+    }
     
     console.log(`✅ Found ${snapshot.size} posts`);
 

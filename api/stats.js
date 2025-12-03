@@ -4,9 +4,14 @@ const { db, auth, admin } = require('./firebase');
 
 router.get('/', async (req, res) => {
   try {
+    console.log("\n📊 Stats API Request:");
+    console.log("   Headers:", Object.keys(req.headers));
+    console.log("   Authorization:", req.headers.authorization ? "Present" : "Missing");
+    
     // 1. Verify Token
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error("❌ Missing or invalid Bearer token");
       return res.status(401).json({ 
         message: 'Unauthorized: Missing Bearer token',
         code: 'MISSING_TOKEN'
@@ -14,14 +19,17 @@ router.get('/', async (req, res) => {
     }
 
     const token = authHeader.split('Bearer ')[1];
+    console.log("   Token length:", token.length);
+    
     let decodedToken;
     
     try {
       decodedToken = await auth.verifyIdToken(token);
+      console.log("✅ Token verified for UID:", decodedToken.uid);
     } catch (tokenError) {
-      console.error("Token verification failed:", tokenError.message);
-      return res.status(403).json({ 
-        message: 'Forbidden: Invalid or expired token',
+      console.error("❌ Token verification failed:", tokenError.message);
+      return res.status(401).json({ 
+        message: 'Unauthorized: Invalid or expired token',
         code: 'INVALID_TOKEN',
         error: tokenError.message
       });

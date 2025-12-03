@@ -35,10 +35,16 @@ router.get('/', async (req, res) => {
     const filterValue = type || category;
     if (filterValue) {
       const filterLower = filterValue.toLowerCase();
-      console.log(`🔎 Filtering by: ${filterLower}`);
+      console.log(`🔎 Filtering by mealType: ${filterLower}`);
       
-      // Try filtering by mealType field
-      query = query.where('mealType', '==', filterLower);
+      try {
+        // Try filtering by mealType field
+        query = query.where('mealType', '==', filterLower);
+      } catch (e) {
+        console.warn(`⚠️ Filtering by mealType failed: ${e.message}`);
+        // Fallback: fetch all and filter in-memory
+        console.log("📌 Falling back to fetch all and filter locally");
+      }
     }
 
     const snapshot = await query.get();
