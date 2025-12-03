@@ -45,11 +45,13 @@ try {
       throw new Error("No valid Firebase configuration found. Please set FIREBASE_CREDENTIALS_BASE64 in Vercel.");
     }
 
+    // PASTIKAN MENGGUNAKAN project_id (snake_case)
     console.log(`\n📊 Config Source: ${configSource}`);
-    console.log(`   Project ID: ${serviceAccount.projectId}`);
+    console.log(`   Project ID: ${serviceAccount.project_id}`); // <<<--- FIXED HERE
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
+      projectId: serviceAccount.project_id // <<<--- FIXED HERE
     });
 
     console.log("✅✅✅ Firebase initialized successfully! ✅✅✅\n");
