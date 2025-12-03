@@ -10,40 +10,59 @@ async function getToken() {
     return null;
 }
 
-// --- BAGIAN 1: LOAD DATA DASHBOARD (VIA API) ---
+// Helper: Safe API call dengan token
+async function apiCall(endpoint, options = {}) {
+    const token = await getToken();
+    
+    if (!token) {
+        console.warn("⚠️ No token available. User may not be authenticated.");
+        throw new Error("User not authenticated");
+    }
+
+    const defaultHeaders = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+
+    const response = await fetch(endpoint, {
+        ...options,
+        headers: { ...defaultHeaders, ...options.headers }
+    });
+
+    console.log(`📡 API Call: ${endpoint} - Status: ${response.status}`);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`❌ API Error: ${endpoint}`, errorData);
+        throw new Error(`API Error: ${response.status} - ${errorData.message || response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+// --- BAGIAN 1: LOAD DATA DASHBOARD ---
 async function loadDashboardData(uid) {
-    console.log("Loading dashboard via API:", uid); 
-    const savedReminders = localStorage.getItem('meal_reminders');
-    const reminders = savedReminders ? JSON.parse(savedReminders) : {};
+    console.log("📊 Loading dashboard data for UID:", uid);
+    
+    const listContainer = document.getElementById('dashboard-meals-list');
+    const progressFill = document.getElementById('dashboard-progress-fill');
+    const consumedText = document.getElementById('dashboard-consumed');
+    const dailyTarget = 2000;
 
     try {
-        const token = await getToken();
-        // CALL API DASHBOARD
-        const response = await fetch(`/api/dashboard?uid=${uid}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const data = await apiCall(`/api/dashboard?uid=${uid}`);
 
-        if (!response.ok) throw new Error("API Dashboard Error");
-        const data = await response.json(); // { foodList: [], totalCalories: ... }
+        const totalCalories = data.totalCalories || 0;
+        const foods = data.foodList || [];
 
-        // --- UPDATE UI (Logika Render HTML tetap sama) ---
-        const listContainer = document.getElementById('dashboard-meals-list');
-        const progressFill = document.getElementById('dashboard-progress-fill');
-        const consumedText = document.getElementById('dashboard-consumed');
-        const dailyTarget = 2000; 
-        
-        const totalCalories = data.totalCalories;
-        const foods = data.foodList;
+        console.log(`✅ Dashboard loaded: ${foods.length} meals, ${totalCalories} calories`);
 
         if (foods.length > 0) {
-            if (listContainer) listContainer.innerHTML = ''; 
+            if (listContainer) listContainer.innerHTML = '';
+            
             foods.forEach(food => {
-                let timeLabel = "Today";
-                const type = food.type || 'snack'; 
-                const typeKey = type.toLowerCase();
-                
-                if (reminders[typeKey]) timeLabel = `Today | ${reminders[typeKey]}`; 
-                else timeLabel = `Today | ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                const type = food.type || food.mealType || 'snack';
+                const timeLabel = `Today | ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
                 const itemHTML = `
                     <div class="today-meals-block" style="margin-bottom: 10px; display: flex; gap: 10px; background-color: var(--secondary-color); padding: 1em; border-radius: 25px; align-items: center;">
@@ -51,18 +70,18 @@ async function loadDashboardData(uid) {
                             <i class="fa-solid fa-bowl-food" style="color: black;"></i>
                         </div>
                         <div class="meal-data">
-                            <p class="meal" style="margin: 0; font-weight: bold;">${food.name}</p>
+                            <p class="meal" style="margin: 0; font-weight: bold;">${food.name || 'Unknown'}</p>
                             <p class="meal-time-data" style="margin: 0; font-size: 0.8em; color: gray;">${timeLabel}</p>
                         </div>
                         <div style="margin-left: auto;">
-                            <p style="font-size: 0.9em; font-weight: bold; color: var(--tertiary-color);">${food.calories} kcal</p>
+                            <p style="font-size: 0.9em; font-weight: bold; color: var(--tertiary-color);">${food.calories || 0} kcal</p>
                         </div>
                     </div>
                 `;
                 if (listContainer) listContainer.innerHTML += itemHTML;
             });
         } else {
-             if (listContainer) listContainer.innerHTML = '<p style="color: gray; font-size: 0.9em; padding: 10px;">No meals added yet.</p>';
+            if (listContainer) listContainer.innerHTML = '<p style="color: gray; font-size: 0.9em; padding: 10px;">No meals added yet.</p>';
         }
 
         if (consumedText && progressFill) {
@@ -74,25 +93,28 @@ async function loadDashboardData(uid) {
         }
 
     } catch (error) {
-        console.error("Error loading dashboard:", error);
+        console.error("❌ Error loading dashboard:", error);
+        if (listContainer) listContainer.innerHTML = `<p style="color: red;">Error loading meals: ${error.message}</p>`;
     }
 }
 
-// --- BAGIAN 2: SLEEP TRACKER CHART (VIA API) ---
+// --- BAGIAN 2: SLEEP TRACKER CHART ---
 async function initSleepChart(uid) {
     const ctx = document.getElementById('sleeptrackerChart');
-    if (!ctx) return; 
-    if (typeof Chart === 'undefined') return;
+    if (!ctx) return;
+    if (typeof Chart === 'undefined') {
+        console.warn("⚠️ Chart.js not loaded");
+        return;
+    }
 
     try {
-        const token = await getToken();
-        // CALL API STATS (TYPE=SLEEP)
-        const response = await fetch(`/api/stats?uid=${uid}&type=sleep`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const apiData = await response.json(); // Array data tidur
+        const apiData = await apiCall(`/api/stats?uid=${uid}&type=sleep`);
+        
+        // Handle response - bisa berupa { data: [...] } atau langsung [...]
+        const statsArray = Array.isArray(apiData) ? apiData : (apiData.data || []);
+        
+        console.log(`✅ Sleep stats loaded: ${statsArray.length} records`);
 
-        // Siapkan data 7 hari terakhir
         const labels = [];
         const dataPoints = [];
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -103,18 +125,15 @@ async function initSleepChart(uid) {
             const dateStr = d.toISOString().split('T')[0];
             const dayName = dayNames[d.getDay()];
             
-            labels.push(dayName); 
-            // Cari data yang tanggalnya cocok
-            const foundData = apiData.find(item => item.date === dateStr);
+            labels.push(dayName);
             
-            if (foundData) dataPoints.push(foundData.durationHours);
-            else dataPoints.push(0); 
+            const foundData = statsArray.find(item => item.date === dateStr);
+            dataPoints.push(foundData ? (foundData.durationHours || 0) : 0);
         }
 
-        // --- Render Chart (Logika Visual Chart.js Sama Persis) ---
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(250, 204, 21, 0.5)'); 
-        gradient.addColorStop(1, 'rgba(250, 204, 21, 0.0)'); 
+        gradient.addColorStop(0, 'rgba(250, 204, 21, 0.5)');
+        gradient.addColorStop(1, 'rgba(250, 204, 21, 0.0)');
 
         new Chart(ctx, {
             type: "line",
@@ -123,12 +142,12 @@ async function initSleepChart(uid) {
                 datasets: [{
                     label: 'Hours slept',
                     fill: true,
-                    tension: 0.4, 
-                    backgroundColor: gradient, 
-                    borderColor: "#facc15", 
+                    tension: 0.4,
+                    backgroundColor: gradient,
+                    borderColor: "#facc15",
                     borderWidth: 3,
-                    pointBackgroundColor: "#1f1f1f", 
-                    pointBorderColor: "#facc15", 
+                    pointBackgroundColor: "#1f1f1f",
+                    pointBorderColor: "#facc15",
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     data: dataPoints
@@ -146,58 +165,54 @@ async function initSleepChart(uid) {
             }
         });
     } catch (error) {
-        console.error("Error sleep chart:", error);
+        console.error("❌ Error initializing sleep chart:", error);
     }
 }
 
-// --- BAGIAN 3: CALORIE CHART (VIA API) ---
+// --- BAGIAN 3: CALORIE CHART ---
 async function initCalorieHistoryChart(uid) {
     const ctx = document.getElementById('caloriesComparisonChart');
     if (!ctx) return;
 
     try {
-        const token = await getToken();
-        // CALL API STATS (TYPE=CALORIES)
-        const response = await fetch(`/api/stats?uid=${uid}&type=calories`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const apiData = await response.json();
+        const apiData = await apiCall(`/api/stats?uid=${uid}&type=calories`);
+        
+        // Handle response format
+        const statsArray = Array.isArray(apiData) ? apiData : (apiData.data || []);
+        
+        console.log(`✅ Calorie stats loaded: ${statsArray.length} records`);
 
         const labels = [];
         const dataPoints = [];
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const dailyTarget = 2000; 
+        const dailyTarget = 2000;
 
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
-            const dayName = i === 0 ? "Today" : dayNames[d.getDay()]; 
+            const dayName = i === 0 ? "Today" : dayNames[d.getDay()];
             
             labels.push(dayName);
             
-            const foundData = apiData.find(item => item.date === dateStr);
+            const foundData = statsArray.find(item => item.date === dateStr);
             let cals = 0;
             
             if (foundData) {
-                // Jika totalCalories sudah dihitung di backend (opsi A) atau hitung manual disini (opsi B)
-                // Karena api/dashboard.js menghitungnya, api/stats.js mungkin mengembalikan raw. 
-                // Mari kita asumsikan api/stats.js mengembalikan raw data 'foodList' juga atau 'totalCalories' jika ada.
-                if(foundData.totalCalories) {
+                if (foundData.totalCalories) {
                     cals = foundData.totalCalories;
-                } else if (foundData.foodList) {
+                } else if (foundData.foodList && Array.isArray(foundData.foodList)) {
                     cals = foundData.foodList.reduce((acc, curr) => acc + (parseInt(curr.calories) || 0), 0);
                 }
             }
             dataPoints.push(cals);
-        } 
+        }
 
-        // --- Render Chart (Logika Visual Sama) ---
         const existingChart = Chart.getChart(ctx);
         if (existingChart) existingChart.destroy();
 
         new Chart(ctx, {
-            type: "bar", 
+            type: "bar",
             data: {
                 labels: labels,
                 datasets: [{
@@ -205,7 +220,7 @@ async function initCalorieHistoryChart(uid) {
                     data: dataPoints,
                     backgroundColor: (context) => {
                         const value = context.raw;
-                        return value > dailyTarget ? '#ef4444' : '#facc15'; 
+                        return value > dailyTarget ? '#ef4444' : '#facc15';
                     },
                     borderRadius: 5,
                     barThickness: 20
@@ -222,26 +237,33 @@ async function initCalorieHistoryChart(uid) {
             }
         });
     } catch (error) {
-        console.error("Error calorie chart:", error);
+        console.error("❌ Error initializing calorie chart:", error);
     }
 }
 
-// --- BAGIAN 4: LOAD DYNAMIC IMAGES (VIA API) ---
+// --- BAGIAN 4: LOAD DYNAMIC MEAL IMAGES ---
 async function loadDynamicMealImages() {
     const categories = ['breakfast', 'lunch', 'dinner'];
-    console.log("Fetching images via API...");
+    console.log("🖼️ Fetching meal images...");
 
     for (const category of categories) {
         try {
-            // CALL API FOODS
+            // Foods API tidak perlu token
             const response = await fetch(`/api/foods?category=${category}`);
+            
+            if (!response.ok) {
+                console.warn(`⚠️ Foods API returned ${response.status} for ${category}`);
+                continue;
+            }
+
             const foods = await response.json();
+            const foodsArray = Array.isArray(foods) ? foods : [];
 
-            if (foods.length > 0) {
-                const randomIndex = Math.floor(Math.random() * foods.length);
-                const foodData = foods[randomIndex];
+            if (foodsArray.length > 0) {
+                const randomIndex = Math.floor(Math.random() * foodsArray.length);
+                const foodData = foodsArray[randomIndex];
 
-                const blockId = `block-${category.toLowerCase()}`; 
+                const blockId = `block-${category.toLowerCase()}`;
                 const blockEl = document.getElementById(blockId);
 
                 if (blockEl && foodData.imageUrl) {
@@ -249,11 +271,11 @@ async function loadDynamicMealImages() {
                         linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6)),
                         url('${foodData.imageUrl}')
                     `;
-                    blockEl.style.border = "none"; 
+                    blockEl.style.border = "none";
                 }
             }
         } catch (error) {
-            console.error(`Error loading image for ${category}:`, error);
+            console.error(`❌ Error loading images for ${category}:`, error);
         }
     }
 }
@@ -261,11 +283,12 @@ async function loadDynamicMealImages() {
 // --- EKSEKUSI ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
+        console.log(`🔐 User authenticated: ${user.email}`);
         loadDashboardData(user.uid);
         initSleepChart(user.uid);
         initCalorieHistoryChart(user.uid);
         loadDynamicMealImages();
     } else {
-        console.log("User belum login.");
+        console.log("❌ User not logged in");
     }
 });

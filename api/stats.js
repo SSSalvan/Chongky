@@ -85,17 +85,8 @@ router.get('/', async (req, res) => {
 
     console.log(`✅ Retrieved ${data.length} records from ${collectionName}`);
 
-    res.status(200).json({
-      success: true,
-      type,
-      uid,
-      dateRange: {
-        start: startStr,
-        end: new Date().toISOString().split('T')[0]
-      },
-      count: data.length,
-      data
-    });
+    // Return as array directly untuk compatibility
+    res.status(200).json(data);
 
   } catch (error) {
     console.error("❌ Stats API Error:", error);
