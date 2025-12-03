@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db, auth } = require('./firebase');
+const { db } = require('./index');
 const admin = require('firebase-admin'); 
 
 // Middleware Auth

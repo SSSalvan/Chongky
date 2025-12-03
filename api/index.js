@@ -1,12 +1,44 @@
 const express = require('express');
 const cors = require('cors');
+const admin = require('firebase-admin');
+
 const app = express();
 
 // Middleware
-app.use(cors({ origin: true })); // Allow all origins (sesuaikan jika perlu keamanan lebih)
+app.use(cors({ origin: true }));
 app.use(express.json());
 
-// Import Routes
+/* -------------------------------
+🔥 FIREBASE SERVICE ACCOUNT SETUP
+--------------------------------*/
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  console.error("❌ FIREBASE_SERVICE_ACCOUNT MISSING");
+} else {
+  console.log("✅ FIREBASE_SERVICE_ACCOUNT FOUND");
+}
+
+let serviceAccount = null;
+
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log("🔥 Firebase Admin Initialized!");
+  }
+} catch (err) {
+  console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:", err);
+}
+
+// Firestore instance
+const db = admin.firestore();
+module.exports.db = db;
+
+/* -------------------------------
+🔥 ROUTES
+--------------------------------*/
 const communityRoute = require('./community');
 const dashboardRoute = require('./dashboard');
 const foodsRoute = require('./foods');
@@ -15,14 +47,10 @@ const sleepRoute = require('./sleep');
 const statsRoute = require('./stats');
 const usersRoute = require('./users');
 
-// Test Route (Health Check)
+// Test Route
 app.get('/', (req, res) => {
   res.status(200).send('API Sleep Tracker Ready!');
 });
-
-console.log("🔥 ENV CHECK → FIREBASE_CREDENTIALS_BASE64:", 
-  process.env.FIREBASE_CREDENTIALS_BASE64 ? "FOUND" : "NOT FOUND"
-);
 
 // Register Routes
 app.use('/api/community', communityRoute);
@@ -33,10 +61,9 @@ app.use('/api/sleep', sleepRoute);
 app.use('/api/stats', statsRoute);
 app.use('/api/users', usersRoute);
 
-// Error Handler Terakhir (Opsional tapi bagus)
+// 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
-
 
 module.exports = app;
