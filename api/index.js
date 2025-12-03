@@ -1,22 +1,15 @@
 const express = require('express');
 const cors = require('cors');
-const { admin, db, auth } = require('./index');
-
+const { admin, db, auth } = require('./firebase');   // ← FIX
 
 const app = express();
 
-// Middleware
 app.use(cors({ origin: true }));
 app.use(express.json());
 
 /* -------------------------------
 🔥 FIREBASE SERVICE ACCOUNT SETUP
 --------------------------------*/
-if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-  console.error("❌ FIREBASE_SERVICE_ACCOUNT MISSING");
-} else {
-  console.log("✅ FIREBASE_SERVICE_ACCOUNT FOUND");
-}
 
 let serviceAccount = null;
 

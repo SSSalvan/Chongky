@@ -1,68 +1,54 @@
-const { admin, db, auth } = require('./index');
+// api/firebase.js
 
-const path = require("path");
-const fs = require("fs");
+const admin = require("firebase-admin");
+
+let db = null;
+let auth = null;
 
 try {
   if (!admin.apps.length) {
-    console.log("\n🔐 Initializing Firebase Admin SDK...\n");
+    console.log("🔥 Initializing Firebase Admin...");
 
-    let serviceAccount;
-    let configSource = "UNKNOWN";
+    let serviceAccount = null;
 
-    // CARA 1: Coba baca variable BASE64 (Utama)
+    // PRIORITY 1: BASE64
     if (process.env.FIREBASE_CREDENTIALS_BASE64) {
       try {
-        console.log("📝 Found Base64 credentials...");
-        const buffer = Buffer.from(process.env.FIREBASE_CREDENTIALS_BASE64, 'base64');
-        const jsonString = buffer.toString('utf-8');
-        serviceAccount = JSON.parse(jsonString);
-        configSource = "Environment Variable (Base64)";
-        console.log("✅ Successfully decoded Base64 credentials");
+        const buffer = Buffer.from(process.env.FIREBASE_CREDENTIALS_BASE64, "base64");
+        serviceAccount = JSON.parse(buffer.toString("utf8"));
+        console.log("🔑 Loaded serviceAccount from Base64");
       } catch (e) {
-        console.error("❌ Failed to parse Base64 credentials:", e.message);
+        console.error("❌ Base64 parse error:", e.message);
       }
     }
 
-    // CARA 2: Fallback ke JSON File (Local)
-    if (!serviceAccount) {
-      const jsonPaths = [
-        path.join(process.cwd(), "firebase-config.json"),
-        path.join(__dirname, "firebase-config.json"),
-      ];
-      for (const jsonPath of jsonPaths) {
-        if (fs.existsSync(jsonPath)) {
-          try {
-            serviceAccount = require(jsonPath);
-            configSource = `JSON File: ${jsonPath}`;
-            break;
-          } catch (e) {}
-        }
+    // PRIORITY 2: FIREBASE_SERVICE_ACCOUNT
+    if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT) {
+      try {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        console.log("🔑 Loaded serviceAccount from FIREBASE_SERVICE_ACCOUNT");
+      } catch (e) {
+        console.error("❌ FIREBASE_SERVICE_ACCOUNT parse error:", e.message);
       }
     }
 
-    // VALIDASI
     if (!serviceAccount) {
-      throw new Error("No valid Firebase configuration found. Please set FIREBASE_CREDENTIALS_BASE64 in Vercel.");
+      throw new Error("❌ No valid Firebase credentials found");
     }
-
-    // PASTIKAN MENGGUNAKAN project_id (snake_case)
-    console.log(`\n📊 Config Source: ${configSource}`);
-    console.log(`   Project ID: ${serviceAccount.project_id}`); // <<<--- FIXED HERE
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      projectId: serviceAccount.project_id // <<<--- FIXED HERE
+      projectId: serviceAccount.project_id,
     });
 
-    console.log("✅✅✅ Firebase initialized successfully! ✅✅✅\n");
+    console.log("✅ Firebase initialized!");
   }
-} catch (error) {
-  console.error("\n❌❌❌ Firebase Init Failed ❌❌❌");
-  console.error(error.message);
+
+  db = admin.firestore();
+  auth = admin.auth();
+
+} catch (err) {
+  console.error("❌ Firebase Initialization FAILED:", err.message);
 }
 
-const db = admin.firestore();
-const auth = admin.auth();
-
-module.exports = { db, auth, admin };
+module.exports = { admin, db, auth };
