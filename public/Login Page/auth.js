@@ -87,7 +87,7 @@ onAuthStateChanged(auth, (user) => {
         if (currentPage.includes("Login.html") || currentPage.includes("signup.html")) {
             if (!currentPage.includes("Questionnaire.html")) {
                 console.log("   → Redirecting to home (user already logged in)");
-                window.location.href = "../index_loggedIn.html";
+                window.location.href = "/index_loggedIn.html";
             }
         }
     } else {
