@@ -1,6 +1,5 @@
 // FILE: api/meals.js
-const { db, auth, admin } = require('./index');
-const { admin, db, auth } = require('./index');
+const { admin, db, auth } = require('./firebase');
 
 
 module.exports = async (req, res) => {

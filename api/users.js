@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { db, auth, admin } = require('./index');
+const { admin, db, auth } = require('./firebase');
+
 
 // Middleware: Verify Token
 const verifyToken = async (req, res, next) => {
