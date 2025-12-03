@@ -7,7 +7,7 @@ try {
   if (!admin.apps.length) {
     let serviceAccount;
 
-    // PRIORITY 1: Cek file JSON di root project (untuk local & production)
+    // PRIORITY 1: Cek file JSON di root project
     const jsonPaths = [
       path.join(process.cwd(), "firebase-config.json"),
       path.join(__dirname, "firebase-config.json"),
@@ -28,7 +28,7 @@ try {
       }
     }
 
-    // PRIORITY 2: Fallback ke environment variables (untuk Vercel)
+    // PRIORITY 2: Fallback ke environment variables
     if (!foundConfig) {
       console.log("📝 Loading Firebase config from environment variables...");
 
@@ -37,10 +37,7 @@ try {
       const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
       if (!projectId || !clientEmail || !privateKey) {
-        console.error("❌ Missing environment variables:");
-        console.error("   FIREBASE_PROJECT_ID:", projectId ? "✓" : "❌");
-        console.error("   FIREBASE_CLIENT_EMAIL:", clientEmail ? "✓" : "❌");
-        console.error("   FIREBASE_PRIVATE_KEY:", privateKey ? "✓" : "❌");
+        console.error("❌ Missing environment variables");
         throw new Error("Firebase configuration incomplete");
       }
 
@@ -53,7 +50,7 @@ try {
       console.log("✅ Loaded Firebase config from environment variables");
     }
 
-    // Validasi serviceAccount
+    // Validasi
     if (!serviceAccount || !serviceAccount.project_id || !serviceAccount.private_key) {
       throw new Error("Invalid Firebase service account configuration");
     }
@@ -63,26 +60,26 @@ try {
     console.log(`   Email: ${serviceAccount.client_email}`);
     console.log(`   Key Type: ${serviceAccount.type}\n`);
 
-    // Initialize Firebase
+    // Initialize Firebase dengan service account (untuk admin operations)
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
 
-    console.log("✅✅✅ Firebase initialized successfully! ✅✅✅\n");
+    console.log("✅✅✅ Firebase Admin SDK initialized successfully! ✅✅✅\n");
   }
 } catch (error) {
   console.error("\n❌❌❌ Firebase Initialization Failed ❌❌❌");
   console.error("Error:", error.message);
   console.error("\n💡 Solutions:");
   console.error("1. Place firebase-config.json in project root");
-  console.error("2. OR set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY env vars");
+  console.error("2. OR set environment variables in Vercel/hosting");
   console.error("3. Ensure private key has correct \\n formatting\n");
-  
-  // Jangan throw error, let the app start but log warning
-  console.warn("⚠️  Firebase not initialized. API will not work.\n");
+
+  // Catat warning tapi jangan stop app
+  console.warn("⚠️  Firebase initialization failed. Some features may not work.\n");
 }
 
 const db = admin.firestore();
 const auth = admin.auth();
 
-module.exports = { db, auth };
+module.exports = { db, auth, admin };

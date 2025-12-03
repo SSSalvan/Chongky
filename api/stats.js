@@ -1,50 +1,127 @@
 const express = require('express');
 const router = express.Router();
-const { db, auth } = require('./firebase');
-const admin = require('firebase-admin');
+const { db, auth, admin } = require('./firebase');
 
 router.get('/', async (req, res) => {
-  // Verify Token
   try {
+    // 1. Verify Token
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ 
+        message: 'Unauthorized: Missing Bearer token',
+        code: 'MISSING_TOKEN'
+      });
     }
-    const token = authHeader.split('Bearer ')[1];
-    await auth.verifyIdToken(token);
-  } catch (error) {
-    return res.status(403).json({ message: 'Forbidden' });
-  }
 
-  // Get Stats Data
-  try {
+    const token = authHeader.split('Bearer ')[1];
+    let decodedToken;
+    
+    try {
+      decodedToken = await auth.verifyIdToken(token);
+    } catch (tokenError) {
+      console.error("Token verification failed:", tokenError.message);
+      return res.status(403).json({ 
+        message: 'Forbidden: Invalid or expired token',
+        code: 'INVALID_TOKEN',
+        error: tokenError.message
+      });
+    }
+
+    // 2. Extract params
     const { uid, type } = req.query;
     
+    if (!uid) {
+      return res.status(400).json({ 
+        message: 'Bad Request: uid parameter required',
+        code: 'MISSING_UID'
+      });
+    }
+
+    if (!type || !['sleep', 'calories'].includes(type)) {
+      return res.status(400).json({ 
+        message: 'Bad Request: type must be "sleep" or "calories"',
+        code: 'INVALID_TYPE'
+      });
+    }
+
+    console.log(`📊 Stats request - UID: ${uid}, Type: ${type}, Token UID: ${decodedToken.uid}`);
+
+    // 3. Security: Pastikan user hanya bisa akses data mereka sendiri
+    if (uid !== decodedToken.uid) {
+      console.warn(`⚠️  User ${decodedToken.uid} tried to access ${uid}'s data`);
+      return res.status(403).json({ 
+        message: 'Forbidden: Cannot access other users data',
+        code: 'UNAUTHORIZED_ACCESS'
+      });
+    }
+
+    // 4. Calculate date range (last 7 days)
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 6);
     const startStr = startDate.toISOString().split('T')[0];
 
-    let collectionName = '';
-    if (type === 'sleep') collectionName = 'sleep_logs';
-    else if (type === 'calories') collectionName = 'daily_logs';
-    else return res.status(400).json({ message: 'Invalid type' });
+    console.log(`📅 Date range: ${startStr} to ${new Date().toISOString().split('T')[0]}`);
 
-    const snapshot = await db.collection('users').doc(uid).collection(collectionName)
+    // 5. Determine collection name
+    const collectionName = type === 'sleep' ? 'sleep_logs' : 'daily_logs';
+
+    // 6. Query data
+    const snapshot = await db
+      .collection('users')
+      .doc(uid)
+      .collection(collectionName)
       .where(admin.firestore.FieldPath.documentId(), '>=', startStr)
       .orderBy(admin.firestore.FieldPath.documentId())
       .get();
 
     const data = [];
     snapshot.forEach(doc => {
-      data.push({ date: doc.id, ...doc.data() });
+      data.push({ 
+        date: doc.id, 
+        ...doc.data() 
+      });
     });
 
-    res.status(200).json(data);
+    console.log(`✅ Retrieved ${data.length} records from ${collectionName}`);
+
+    res.status(200).json({
+      success: true,
+      type,
+      uid,
+      dateRange: {
+        start: startStr,
+        end: new Date().toISOString().split('T')[0]
+      },
+      count: data.length,
+      data
+    });
 
   } catch (error) {
-    console.error(error); 
-    res.status(500).json({ message: 'Server Error' });
+    console.error("❌ Stats API Error:", error);
+    
+    // Handle specific Firestore errors
+    if (error.code === 16) {
+      return res.status(401).json({ 
+        message: 'Authentication Error: Invalid Firebase credentials',
+        code: 'AUTH_ERROR',
+        details: error.message
+      });
+    }
+
+    if (error.code === 7) { // PERMISSION_DENIED
+      return res.status(403).json({ 
+        message: 'Permission Denied: Check Firestore security rules',
+        code: 'PERMISSION_DENIED',
+        details: error.message
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Internal Server Error',
+      code: 'SERVER_ERROR',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Unknown error'
+    });
   }
 });
 
