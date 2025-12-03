@@ -1,45 +1,67 @@
 const admin = require("firebase-admin");
 
-// --- DEBUG CODE (Bisa dihapus nanti) ---
-if (process.env.FIREBASE_PRIVATE_KEY) {
-  console.log("Debug: Memeriksa kunci...");
+// Fungsi untuk membersihkan kunci private key yang "kotor"
+function getCleanPrivateKey(key) {
+  if (!key) return undefined;
+  
+  // 1. Ganti literal \n dengan enter asli
+  let cleanKey = key.replace(/\\n/g, '\n');
+
+  // 2. Hapus tanda kutip di awal/akhir jika ada
+  cleanKey = cleanKey.replace(/^"|"$/g, '');
+
+  // 3. Pastikan format PEM (Begin/End) benar & Hapus spasi kosong di sekitar
+  const beginTag = "-----BEGIN PRIVATE KEY-----";
+  const endTag = "-----END PRIVATE KEY-----";
+  
+  // Cari posisi tag
+  const startIndex = cleanKey.indexOf(beginTag);
+  const endIndex = cleanKey.indexOf(endTag);
+
+  if (startIndex !== -1 && endIndex !== -1) {
+    // Ambil hanya dari BEGIN sampai END
+    cleanKey = cleanKey.substring(startIndex, endIndex + endTag.length);
+  }
+  
+  return cleanKey;
 }
-// ---------------------------------------
+
 
 if (!admin.apps.length) {
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-  if (privateKey) {
-    // 1. Tangani baris baru (literal \n menjadi enter asli)
-    privateKey = privateKey.replace(/\\n/g, '\n');
-
-    // 2. TEKNIK BARU: Ekstrak hanya bagian kuncinya saja
-    // Ini akan membuang tanda kutip, spasi, atau karakter aneh di luar blok kunci
-    const match = privateKey.match(/-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----/);
-    
-    if (match) {
-        privateKey = match[0]; // Ambil hasil yang bersih
-    } else {
-        // Jika regex gagal (misal formatnya aneh sekali), coba bersihkan kutip manual
-        privateKey = privateKey.replace(/^"|"$/g, '');
-    }
-  }
-
   try {
+    const privateKey = getCleanPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+    
+    // Debugging (Aman, tidak menampilkan kunci lengkap)
+    if (privateKey) {
+        console.log("Panjang Kunci Bersih:", privateKey.length);
+        console.log("Karakter Terakhir Kunci:", JSON.stringify(privateKey.slice(-10)));
+    }
+
     admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey,
-        }),
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: privateKey,
+      }),
     });
-    console.log("Firebase berhasil diinisialisasi!");
+    console.log("✅ Firebase berhasil connect!");
+    
   } catch (error) {
-    console.error("Gagal inisialisasi Firebase:", error);
+    console.error("❌ Gagal Inisialisasi Firebase:", error.message);
+    // Kita tidak melempar error di sini agar server tidak crash total,
+    // tapi request database pasti akan gagal nanti.
   }
 }
 
-const db = admin.firestore();
-const auth = admin.auth();
+// Pastikan app sudah ada sebelum memanggil service
+let db, auth;
+try {
+    db = admin.firestore();
+    auth = admin.auth();
+} catch (e) {
+    // Jika init gagal di atas, ini akan error. 
+    // Kita biarkan undefined, nanti route handler akan error 500 yang wajar.
+    console.error("Gagal load service Firestore/Auth:", e.message);
+}
 
 module.exports = { db, auth };
