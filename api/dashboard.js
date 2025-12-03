@@ -1,7 +1,9 @@
-// FILE: api/dashboard.js
-const { db, auth } = require('../firebase');
-module.exports = async (req, res) => {
-  // 1. Verifikasi Token 
+const express = require('express');
+const router = express.Router();
+const { db, auth } = require('./firebase');
+
+router.get('/', async (req, res) => {
+  // 1. Verifikasi Token
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -30,10 +32,12 @@ module.exports = async (req, res) => {
       data.totalCalories = data.foodList.reduce((acc, curr) => acc + (parseInt(curr.calories) || 0), 0);
     }
 
-    return res.status(200).json(data);
+    res.status(200).json(data);
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
-};
+});
+
+module.exports = router;

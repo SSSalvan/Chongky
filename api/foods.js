@@ -1,7 +1,8 @@
-// FILE: api/foods.js
-const { db } = require('../firebase');
+const express = require('express');
+const router = express.Router();
+const { db } = require('./firebase');
 
-module.exports = async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { id, type, category } = req.query;
 
@@ -12,7 +13,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ id: doc.id, ...doc.data() });
     }
 
-    // CASE B: Get list of foods (can filter by type or category)
+    // CASE B: Get list of foods
     let query = db.collection('fooditems');
     
     const filterValue = type || category;
@@ -26,10 +27,12 @@ module.exports = async (req, res) => {
       foods.push({ id: doc.id, ...doc.data() });
     });
 
-    return res.status(200).json(foods);
+    res.status(200).json(foods);
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
-};
+});
+
+module.exports = router;
