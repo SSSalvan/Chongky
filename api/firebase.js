@@ -1,21 +1,29 @@
 const admin = require("firebase-admin");
 
-// Fungsi helper untuk memformat Private Key (Penting untuk Vercel)
+// --- Helper Formatting Private Key ---
 function formatPrivateKey(key) {
   if (!key) return null;
-  return key.replace(/\\n/g, '\n'); // Mengubah literal \n menjadi newline asli
+
+  // 1. Buang tanda kutip di awal dan akhir jika ada (Penyebab utama error DER bytes)
+  const rawKey = key.replace(/^"|"$/g, '');
+
+  // 2. Ganti literal \n menjadi karakter baris baru (newline) asli
+  //    Ini wajib karena di Vercel env var seringkali jadi satu baris panjang
+  return rawKey.replace(/\\n/g, '\n');
 }
 
 try {
-  // Cek apakah Firebase sudah di-init sebelumnya (untuk mencegah double-init di serverless)
+  // Cek agar tidak init double
   if (!admin.apps.length) {
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    // Panggil fungsi format di sini
     const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
-    // Validasi ketat: Jika env var hilang, stop proses sekarang.
+    // Validasi Environment Variables
     if (!projectId || !clientEmail || !privateKey) {
-      throw new Error("Missing Firebase Environment Variables (PROJECT_ID, CLIENT_EMAIL, or PRIVATE_KEY)");
+      console.error("❌ Missing Env Vars: Cek PROJECT_ID, CLIENT_EMAIL, atau PRIVATE_KEY di Vercel.");
+      throw new Error("Konfigurasi Firebase tidak lengkap.");
     }
 
     admin.initializeApp({
@@ -29,11 +37,10 @@ try {
   }
 } catch (error) {
   console.error("❌ Firebase Init Error:", error.message);
-  // Di Vercel, kita biarkan ini throw agar deployment gagal & kita sadar ada yang salah
+  // Kita throw error agar Vercel merestart function dan tidak menggantung
   throw error; 
 }
 
-// Export langsung (karena jika sampai sini, admin pasti sudah ready)
 const db = admin.firestore();
 const auth = admin.auth();
 
