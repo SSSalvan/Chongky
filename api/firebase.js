@@ -1,30 +1,42 @@
 const admin = require("firebase-admin");
 
-// --- DEBUG CODE (Hapus nanti jika sudah fix) ---
-console.log("--- DEBUG FIREBASE CONFIG ---");
-console.log("Project ID:", process.env.FIREBASE_PROJECT_ID);
-console.log("Client Email:", process.env.FIREBASE_CLIENT_EMAIL);
-// Cek apakah key ada, dan cetak 10 karakter pertamanya saja untuk memastikan format
-const key = process.env.FIREBASE_PRIVATE_KEY;
-console.log("Private Key Status:", key ? `Ada (Panjang: ${key.length}, Awal: ${key.substring(0, 10)}...)` : "TIDAK DITEMUKAN");
-console.log("-------------------------------");
-// ----------------------------------------------
+// --- DEBUG CODE (Bisa dihapus nanti) ---
+if (process.env.FIREBASE_PRIVATE_KEY) {
+  console.log("Debug: Memeriksa kunci...");
+}
+// ---------------------------------------
 
 if (!admin.apps.length) {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (privateKey) {
-    // Pembersihan format (kode yang sebelumnya sudah kita buat)
-    privateKey = privateKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n');
+    // 1. Tangani baris baru (literal \n menjadi enter asli)
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
+    // 2. TEKNIK BARU: Ekstrak hanya bagian kuncinya saja
+    // Ini akan membuang tanda kutip, spasi, atau karakter aneh di luar blok kunci
+    const match = privateKey.match(/-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----/);
+    
+    if (match) {
+        privateKey = match[0]; // Ambil hasil yang bersih
+    } else {
+        // Jika regex gagal (misal formatnya aneh sekali), coba bersihkan kutip manual
+        privateKey = privateKey.replace(/^"|"$/g, '');
+    }
   }
 
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: privateKey,
-    }),
-  });
+  try {
+    admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: privateKey,
+        }),
+    });
+    console.log("Firebase berhasil diinisialisasi!");
+  } catch (error) {
+    console.error("Gagal inisialisasi Firebase:", error);
+  }
 }
 
 const db = admin.firestore();
