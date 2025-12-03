@@ -1,11 +1,24 @@
 const admin = require("firebase-admin");
 
-// Mencegah inisialisasi ganda saat hot-reload
 if (!admin.apps.length) {
-  // Pastikan private key diformat dengan benar untuk Vercel (menangani baris baru \n)
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    : undefined;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (privateKey) {
+    // 1. Membersihkan tanda kutip (") jika tidak sengaja ter-copy di awal/akhir
+    try {
+        // Jika formatnya JSON string (ada kutip di luar), kita parse dulu
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+             privateKey = JSON.parse(privateKey);
+        }
+    } catch (e) {
+        // Jika gagal parse, kita manual remove kutipnya
+        privateKey = privateKey.replace(/^"|"$/g, '');
+    }
+
+    // 2. Memperbaiki karakter baris baru (\n)
+    // Mengganti literal string "\n" menjadi karakter enter yang asli
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
 
   admin.initializeApp({
     credential: admin.credential.cert({
