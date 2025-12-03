@@ -1,41 +1,39 @@
 const admin = require("firebase-admin");
 
-// Fungsi untuk membersihkan kunci private key yang "kotor"
-function getCleanPrivateKey(key) {
-  if (!key) return undefined;
-  
-  // 1. Ganti literal \n dengan enter asli
-  let cleanKey = key.replace(/\\n/g, '\n');
+function formatPrivateKey(key) {
+  if (!key) return null;
 
-  // 2. Hapus tanda kutip di awal/akhir jika ada
-  cleanKey = cleanKey.replace(/^"|"$/g, '');
+  // 1. Bersihkan semua tanda kutip ganda jika ada
+  let rawKey = key.replace(/"/g, '');
 
-  // 3. Pastikan format PEM (Begin/End) benar & Hapus spasi kosong di sekitar
-  const beginTag = "-----BEGIN PRIVATE KEY-----";
-  const endTag = "-----END PRIVATE KEY-----";
-  
-  // Cari posisi tag
-  const startIndex = cleanKey.indexOf(beginTag);
-  const endIndex = cleanKey.indexOf(endTag);
+  // 2. Definisikan Header dan Footer standar
+  const header = "-----BEGIN PRIVATE KEY-----";
+  const footer = "-----END PRIVATE KEY-----";
 
-  if (startIndex !== -1 && endIndex !== -1) {
-    // Ambil hanya dari BEGIN sampai END
-    cleanKey = cleanKey.substring(startIndex, endIndex + endTag.length);
+  // 3. Jika kunci tidak memiliki header/footer, anggap itu sudah rusak atau format lain
+  if (!rawKey.includes(header) || !rawKey.includes(footer)) {
+    // Kembalikan apa adanya dengan perbaikan baris baru standar sebagai fallback
+    return rawKey.replace(/\\n/g, '\n');
   }
-  
-  return cleanKey;
-}
 
+  // 4. Ektrak HANYA bagian Base64 (isi kuncinya)
+  // Kita buang header, footer, spasi, dan enter lama untuk mendapatkan string bersih
+  const content = rawKey
+    .replace(header, "")
+    .replace(footer, "")
+    .replace(/\\n/g, "") // Hapus literal \n
+    .replace(/\s/g, ""); // Hapus semua spasi/enter asli
+
+  // 5. Susun ulang kunci dengan format yang DIJAMIN benar
+  // Header + Enter + Isi Bersih + Enter + Footer
+  return `${header}\n${content}\n${footer}\n`;
+}
 
 if (!admin.apps.length) {
   try {
-    const privateKey = getCleanPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+    const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
     
-    // Debugging (Aman, tidak menampilkan kunci lengkap)
-    if (privateKey) {
-        console.log("Panjang Kunci Bersih:", privateKey.length);
-        console.log("Karakter Terakhir Kunci:", JSON.stringify(privateKey.slice(-10)));
-    }
+    if (!privateKey) throw new Error("Private Key tidak ditemukan di Environment Variables");
 
     admin.initializeApp({
       credential: admin.credential.cert({
@@ -44,24 +42,23 @@ if (!admin.apps.length) {
         privateKey: privateKey,
       }),
     });
-    console.log("✅ Firebase berhasil connect!");
+    console.log("✅ Firebase berhasil diinisialisasi ulang!");
     
   } catch (error) {
-    console.error("❌ Gagal Inisialisasi Firebase:", error.message);
-    // Kita tidak melempar error di sini agar server tidak crash total,
-    // tapi request database pasti akan gagal nanti.
+    console.error("❌ Gagal Inisialisasi Firebase (Critical):", error.message);
+    // Log error detail untuk debugging di Vercel
+    if (error.errorInfo) console.error(JSON.stringify(error.errorInfo));
   }
 }
 
-// Pastikan app sudah ada sebelum memanggil service
+// Inisialisasi service
+// Gunakan try-catch agar jika init gagal, export tidak langsung crash saat require
 let db, auth;
 try {
-    db = admin.firestore();
-    auth = admin.auth();
+  db = admin.firestore();
+  auth = admin.auth();
 } catch (e) {
-    // Jika init gagal di atas, ini akan error. 
-    // Kita biarkan undefined, nanti route handler akan error 500 yang wajar.
-    console.error("Gagal load service Firestore/Auth:", e.message);
+  console.error("Service Firestore/Auth belum siap:", e.message);
 }
 
 module.exports = { db, auth };
