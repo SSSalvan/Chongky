@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { db, auth } = require('./firebase');
+const { db, auth, admin } = require('./index');
+
 
 // Helper untuk verify token (opsional untuk GET)
 const getUser = async (req) => {

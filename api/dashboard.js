@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db } = require('./index');
+const { db, auth, admin } = require('./index');
 
 
 router.get('/', async (req, res) => {

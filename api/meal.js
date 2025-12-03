@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const { db } = require('./index');
-const admin = require('firebase-admin'); 
+// FILE: api/meals.js
+const { db, auth, admin } = require('./index');
 
-// Middleware Auth
-router.use(async (req, res, next) => {
+const admin = require('firebase-admin'); // Butuh ini untuk FieldValue.increment
+
+module.exports = async (req, res) => {
+  // 1. Verifikasi Token
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -12,58 +12,60 @@ router.use(async (req, res, next) => {
     }
     const token = authHeader.split('Bearer ')[1];
     await auth.verifyIdToken(token);
-    next();
   } catch (error) {
     return res.status(403).json({ message: 'Forbidden' });
   }
-});
 
-// GET: Ambil Data Kalori
-router.get('/', async (req, res) => {
   const { uid, date } = req.query;
-  if (!uid || !date) return res.status(400).json({ message: 'Missing params' });
   
-  try {
-    const docRef = db.collection('users').doc(uid).collection('daily_logs').doc(date);
-    const docSnap = await docRef.get();
+  // GET: Ambil Data Kalori Tanggal Tertentu (Buat Kalender)
+  if (req.method === 'GET') {
+    if (!uid || !date) return res.status(400).json({ message: 'Missing params' });
     
-    if (!docSnap.exists) return res.status(200).json({ totalCalories: 0 });
-    
-    const data = docSnap.data();
-    const total = (data.foodList || []).reduce((acc, curr) => acc + (parseInt(curr.calories) || 0), 0);
-    
-    res.status(200).json({ totalCalories: total });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    try {
+      const docRef = db.collection('users').doc(uid).collection('daily_logs').doc(date);
+      const docSnap = await docRef.get();
+      
+      if (!docSnap.exists) return res.status(200).json({ totalCalories: 0 });
+      
+      const data = docSnap.data();
+      // Prioritaskan hitung ulang dari array foodList agar akurat
+      const total = (data.foodList || []).reduce((acc, curr) => acc + (parseInt(curr.calories) || 0), 0);
+      
+      return res.status(200).json({ totalCalories: total });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
   }
-});
 
-// POST: Tambah Makanan
-router.post('/', async (req, res) => {
-  const { uid, date } = req.query; // Ambil UID dari query (sesuai logika asli)
-  const { calories, foodName, mealType } = req.body;
-  
-  const targetDate = date || new Date().toISOString().split('T')[0];
+  // POST: Tambah Makanan Baru (Add to Log)
+  if (req.method === 'POST') {
+    const { calories, foodName, mealType } = req.body;
+    
+    // Default ke hari ini jika tanggal tidak dikirim
+    const targetDate = date || new Date().toISOString().split('T')[0];
 
-  try {
-    const docRef = db.collection('users').doc(uid).collection('daily_logs').doc(targetDate);
+    try {
+      const docRef = db.collection('users').doc(uid).collection('daily_logs').doc(targetDate);
 
-    await docRef.set({
-      totalCalories: admin.firestore.FieldValue.increment(parseInt(calories)),
-      lastUpdated: new Date(),
-      foodList: admin.firestore.FieldValue.arrayUnion({
-        name: foodName,
-        calories: parseInt(calories),
-        type: mealType,
-        timestamp: new Date().toISOString()
-      })
-    }, { merge: true });
+      // Gunakan Atomicity Firestore Admin SDK
+      await docRef.set({
+        totalCalories: admin.firestore.FieldValue.increment(parseInt(calories)),
+        lastUpdated: new Date(),
+        foodList: admin.firestore.FieldValue.arrayUnion({
+          name: foodName,
+          calories: parseInt(calories),
+          type: mealType,
+          timestamp: new Date().toISOString()
+        })
+      }, { merge: true });
 
-    res.status(200).json({ message: 'Success' });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
+      return res.status(200).json({ message: 'Success' });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ error: e.message });
+    }
   }
-});
 
-module.exports = router;
+  return res.status(405).json({ message: 'Method Not Allowed' });
+};
