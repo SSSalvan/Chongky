@@ -1,0 +1,164 @@
+/* 1. Global Reset & Body */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #1a1a1a; /* Dark background */
+    color: #f0f0f0;            /* Light text */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 2.5rem;
+}
+
+/* 2. Header & Navigation */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto; /* Center header content on large screens */
+}
+
+.main-nav {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: #777; /* Inactive nav link */
+    font-weight: 500;
+    font-size: 1.1rem;
+    padding-bottom: 0.5rem;
+    transition: color 0.3s, border-color 0.3s;
+}
+
+.main-nav a.active {
+    color: #fff;
+    border-bottom: 2px solid #fff;
+}
+
+.profile-icon {
+    font-size: 1.75rem; /* Icon size */
+    color: #ccc;
+}
+
+/* 3. Main Login Form Container */
+.login-container {
+    flex-grow: 1; /* Pushes the form to the vertical center */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center form vertically */
+    width: 100%;
+    max-width: 400px; /* Constrain form width */
+    margin: 0 auto;   /* Center form horizontally */
+}
+
+.welcome-text h2 {
+    font-size: 2.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 3rem;
+}
+
+/* 4. Form Elements */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group {
+    margin-bottom: 2.5rem;
+}
+
+.input-group label {
+    display: block;
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 0.75rem;
+}
+
+.input-group input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #555; /* Underline style */
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-bottom-color: #fff; /* Highlight on focus */
+}
+
+.forgot-password {
+    text-decoration: none;
+    color: #888;
+    font-size: 0.9rem;
+    text-align: right;
+    margin-top: -1.5rem; /* Pulls it closer to the password field */
+    margin-bottom: 3rem;
+    transition: color 0.3s;
+}
+
+.forgot-password:hover {
+    color: #fff;
+}
+
+/* 5. Social & Next Buttons */
+.social-login {
+    display: flex;
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+}
+
+.social-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #333;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background-color 0.3s;
+}
+
+.social-btn:hover {
+    background-color: #444;
+}
+
+.next-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #fff;
+    color: #111;
+    border: none;
+    border-radius: 50px; /* Pill shape */
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 120px;
+    align-self: flex-end; /* Aligns button to the right */
+    transition: transform 0.3s;
+}
+
+.next-btn:hover {
+    transform: scale(1.05);
+}
+
+.next-btn i {
+    font-size: 0.9rem;
+}

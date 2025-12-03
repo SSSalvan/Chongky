@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITAHABIT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1 class="navbar-title">VITAHABIT</h1>
+        <div class="links">
+            <a href="#wellness-section" class="link-style">Wellness</a>
+            <a href="#library-section" class="link-style">Library</a>
+            <a href="profile.html" class="link-style">Profile</a>
+            <button id="logout-btn" class="login-button">Logout</button>
+            <script type="module" src="Login Page/script.js"></script>
+        </div>
+    </div>
+    <div class="banner">
+        <div class="bannertext">
+            <h2 class="bannerTitle">VITAHABIT</h2>
+        </div>
+        <img src="Assets/Phone.png" class="phone">
+    </div>
+    <div class="wellness-section" id="wellness-section">
+        <h1>Wellness</h1>
+        <div class="divider-2">
+            <div class="mealplan">
+                <div class="wellness-block-title">
+                    <p class="divider-2-title">Meal Plan</p>
+                    <a href="MealPlan.html" class="no-deco">></a>
+                </div>
+                <div class="mealplan-content">
+                    <div class="today-meals">
+                        <p>Today's Meals</p>
+                                <div id="dashboard-meals-list" class="today-meals-content">
+                                    <p style="color: gray; font-size: 0.9em; padding: 10px;">No meals added yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mealplan-divider">
+                        <div id="block-breakfast" class="mealplan-block breakfast-block" onclick="window.location.href='meal_selector.html?type=breakfast'" style="cursor: pointer; background-size: cover; background-position: center;">
+                            Breakfast
+                        </div>
+                        
+                        <div id="block-lunch" class="mealplan-block lunch-block" onclick="window.location.href='meal_selector.html?type=lunch'" style="cursor: pointer; background-size: cover; background-position: center;">
+                            Lunch
+                        </div>
+                        
+                        <div id="block-dinner" class="mealplan-block dinner-block" onclick="window.location.href='meal_selector.html?type=dinner'" style="cursor: pointer; background-size: cover; background-position: center;">
+                            Dinner
+                        </div>
+                    </div>
+                </div>
+            </div>
+               <div class="sleeptracker">
+                        <div class="wellness-block-title">
+                            <p class="divider-2-title">Sleep Tracker</p>
+                            <a href="SleepTracker.html" class="no-deco">&gt;</a>
+                        </div>
+
+                        <div class="sleeptracker-content">
+                            
+                            <div class="sleeptracker-graph">
+                                <canvas id="sleeptrackerChart" style="width:40%;"></canvas>
+                            </div>
+
+                            <div class="meal-progress-summary" style="margin-top: 1em; background-color: var(--primary-color);">
+                                
+                                <div class="wellness-block-title" style="padding: 0 0 1em 0;">
+                                    <p class="divider-2-title">Calories Comparison</p>
+                                </div>
+
+                                <div class="meal-plan-title">Today's Progress</div>
+                                <div class="progress-bar-wrapper">
+                                    <div id="dashboard-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                                </div>
+                                
+                                <div class="calorie-count" style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2em;">
+                                    <span>Consumed: <span id="dashboard-consumed">0</span> kcal</span>
+                                    <span style="color: var(--tertiary-color);">Target: <span id="dashboard-target">2000</span> kcal</span>
+                                </div>
+
+                                <div style="height: 200px; width: 100%;">
+                                    <canvas id="caloriesComparisonChart"></canvas>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="library-section" id="library-section">
+        <div class="library-content">
+            <h1>Library</h1>
+            <div class="divider-2">
+                <div class="community">
+                    <div class="wellness-block-title">
+                        <p class="divider-2-title">Community</p>
+                    </div>
+                    <div class="community-post-form">
+                        <textarea id="community-post-input" placeholder="Share something with the community..."></textarea>
+                        <button id="community-post-btn">Post</button>
+                    </div>
+                    <div id="community-posts-list" class="community-posts-container"></div>
+                </div>
+                <div class="article">
+                    <div class="wellness-block-title">
+                        <p class="divider-2-title">Articles</p>
+                    </div>
+                    <div class="sleeptracker-content articles-content">
+                        <a href="https://www.health.harvard.edu/nutrition/high-quality-carbohydrates-in-midlife-may-keep-women-healthier-as-they-age" class="no-deco">
+                            <div class="article-block article-1" style="background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.95)), url(https://domf5oio6qrcr.cloudfront.net/medialibrary/17075/p8-healthycarbs-wl1025-gi1126738946.jpg), linear-gradient(#eb01a5, #d13531);">
+                                <p class="title">High-quality carbohydrates in midlife may keep women healthier as they age</p>
+                                <p class="description">Discover how the carbs you eat in your 40s and 50s could shape your health decades later</p>
+                            </div>
+                        </a>
+                        <a href="https://shimacrobiotics.org/mediterranean-diet-vs-macrobiotics/?gad_source=1&gad_campaignid=1367635080&gbraid=0AAAAADPPqdjbBdBkCjx-92O70Fk5Wf3cy&gclid=Cj0KCQjw0Y3HBhCxARIsAN7931XqRfFnWGq8dIRwCBBz4NO6EAFYOjTVtFf42XLynmB_9w1bCFtTWOsaAhYEEALw_wcB" class="no-deco">
+                            <div class="article-block article-3" style="background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.95)), url(https://shimacrobiotics.org/wp-content/uploads/2018/04/Macrobiotic-Diet-Pyramid.png);">
+                                <p class="title">Mediterranean Diet vs Macrobiotics</p>
+                                <p class="description">Learn more about the healthy Mediterranean Diet originating from Europe.</p>
+                            </div>
+                        </a>
+                        <a href="https://quanutrition.com/blog/gym-workout-diet-plan/" class="no-deco">
+                            <div class="article-block article-2" style="background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.95)), url(https://tse2.mm.bing.net/th/id/OIP.fWHXurAvwKgfd6Uql4PduQHaE7?cb=12&rs=1&pid=ImgDetMain&o=7&rm=3);">
+                                <p class="title">Gym Workout Diet Plan</p>
+                                <p class="description">While working out, it is just as important to make sure your body gets the nutrients it needs. Maintaining a healthy diet that helps your muscles heal, boosts your strength and stamina, and keeps fat loss in check is important to get the most out of your gym workouts.</p>
+                            </div>
+                        </a>
+                        <a href="https://www.healthifyme.com/blog/the-ultimate-7-day-gym-diet-plan/" class="no-deco">
+                            <div class="article-block article-4" style="background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.95)), url(https://www.healthifyme.com/blog/wp-content/uploads/2020/01/gym-diet-cover-1.jpg);">
+                                <p class="title">The Ultimate 7 Day Gym Diet Plan</p>
+                                <p class="description">When it comes to nutrition, things can become overly complicated. However, it is clear that nutrition has a huge impact on the progress that you make in the gym</p>
+                            </div>
+                        </a>
+                        <a href="https://www.health.harvard.edu/nutrition/6-new-terms-for-healthy-eating" class="no-deco">
+                            <div class="article-block article-5" style="background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.95)), url(https://domf5oio6qrcr.cloudfront.net/medialibrary/17099/p6-cookingcouple-hl1025-gi1784017636.jpg);">
+                                <p class="title">6 new terms for healthy eating</p>
+                                <p class="description">Discover why more people are embracing plant-based eating—not just for better health, but for a cleaner planet and a more compassionate lifestyle.</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="module" src="script.js"></script>
+<script type="module" src="community.js"></script>
+</html>

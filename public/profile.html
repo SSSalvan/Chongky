@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - VITAHABIT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1>VITAHABIT</h1>
+        <div class="links">
+            <a href="index_loggedIn.html#wellness-section" class="link-style">Wellness</a>
+            <a href="index_loggedIn.html#library-section" class="link-style">Library</a>
+            <a href="index_loggedIn.html#progress-section" class="link-style">Progress</a>
+            <a href="profile.html" class="link-style" style="color: var(--tertiary-color); font-weight: bold;">Profile</a>
+        </div>
+    </div>
+
+    <div class="nutrition-page-container">
+        <header class="nutrition-page-header">
+            <a href="index_loggedIn.html" class="no-deco">
+                <div class="nutrition-title-dropdown">
+                    <i class="fa-solid fa-chevron-left"></i> Back to Dashboard
+                </div>
+            </a>
+        </header>
+
+        <div class="profile-container">
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="avatar-wrapper">
+                        <img id="profile-avatar" src="Assets/icon.png" class="profile-img" alt="Profile Picture">
+                        
+                        <input type="file" id="file-upload" accept="image/*" style="display: none;">
+                        
+                        <label for="file-upload" class="upload-btn" title="Upload Photo">
+                            <i class="fa-solid fa-camera"></i>
+                        </label>
+                    </div>
+                    <h2 id="profile-display-name">Loading...</h2>
+                </div>
+
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="input-name" class="form-input" placeholder="Your Name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="input-email" class="form-input" placeholder="email@example.com" readonly style="opacity: 0.6; cursor: not-allowed;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Birth Date</label>
+                        <input type="date" id="input-birthdate" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="input-gender" class="form-input">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay">
+        <p style="color: white; font-weight: bold;">Saving...</p>
+    </div>
+
+    <script type="module" src="profile.js"></script>
+</body>
+</html>

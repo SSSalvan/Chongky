@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Meal - VITAHABIT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="nutrition-page-container">
+        <header class="nutrition-page-header" style="justify-content: flex-start; gap: 1em;">
+            <a href="MealPlan.html" style="color: white; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div class="nutrition-title-dropdown">Select Meal</div>
+        </header>
+
+        <main class="nutrition-content">
+            <div class="meal-selector-header" style="margin-top: 20px; font-size: 1.2em; font-weight: bold;">
+                Meal Plan - <span id="current-meal-type" style="color: var(--tertiary-color);">Loading...</span>
+            </div>
+            
+            <div id="meal-list-container" class="meal-list-container" style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <p style="text-align: center; color: gray;">Loading options...</p>
+            </div>
+        </main>
+
+        <script type="module" src="mealplan.js"></script>
+    </div>
+</body>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Tracker - VITAHABIT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="nutrition-page-container">
+        <header class="nutrition-page-header">
+            <a href="index_loggedIn.html" class="no-deco">
+                <div class="nutrition-title-dropdown">
+                    <i class="fa-solid fa-chevron-left"></i> Back
+                </div>
+            </a>
+            <div class="profile-icon">
+                <i class="fa-regular fa-user"></i> 
+            </div>
+        </header>
+
+        <main class="nutrition-content">
+            <div class="meal-progress-summary">
+                <p class="meal-plan-title">Sleep Tracker</p>
+                <p class="meal-plan-date" id="current-date-display">Today</p>
+            </div>
+            <div class="day-selector">
+            </div>
+            
+            <div class="sleep-tracker-fixture">
+                <div class="progress-ring-container">
+                    <svg class="progress-ring" width="200" height="200">
+                        <circle class="progress-ring-circle-bg" r="80" cx="100" cy="100"/>
+                        <circle class="progress-ring-circle" stroke-dasharray="502" stroke-dashoffset="502" r="80" cx="100" cy="100"/>
+                    </svg>
+                    <div class="sleep-score-centered">
+                        <h3 id="score-val">0</h3>
+                        <p>Sleep Score</p>
+                    </div>
+                </div>
+                <div class="sleep-data-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; margin-top: 30px; text-align: center;">
+                    <div class="sleep-time" style="grid-column: span 2;">
+                        <div class="sleep-score-label"><p>SLEEP DURATION</p></div>
+                        <h3 class="sleep-score-data"><b class="blue" id="sleep-duration-val">--</b></h3>
+                    </div>
+                    <div class="wakeup-time">
+                        <div class="wakeup-time-label"><p>WAKE UP TIME</p></div>
+                        <h3 class="sleep-score-data"><b class="yellow" id="wakeup-time-val">--:--</b></h3>
+                    </div>
+                    <div class="time-in-bed">
+                        <div class="time-in-bed-label"><p>TIME IN BED</p></div>
+                        <h3 class="sleep-score-data"><b class="green" id="bed-time-val">--:--</b></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="sleep-schedule-container" style="margin-top: 30px;">
+                <div class="sleep-slot" id="sleep-action-btn" style="cursor: pointer; justify-content: center; background-color: var(--tertiary-color); color: black;">
+                    <p class="meal-slot-time" style="font-weight: 800; font-size: 1.2em;">Sleep Now 🌙</p>
+                </div>
+                <div class="sleep-slot" id="open-reminder-btn" style="cursor: pointer; justify-content: center;">
+                    <p class="meal-slot-time">Set Sleep Reminder</p>
+                </div>
+
+            </div>
+        </main>
+        <div id="sleep-reminder-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3>Sleep Reminder</h3>
+                <p style="color: gray; font-size: 0.9em; margin-bottom: 20px;">Set a time to go to bed.</p>
+                
+                <div class="reminder-input-group">
+                    <label for="sleep-reminder-time"><i class="fa-solid fa-bed"></i> Bedtime</label>
+                    <input type="time" id="sleep-reminder-time">
+                </div>
+
+                <div class="modal-actions">
+                    <button id="cancel-sleep-btn" class="modal-btn secondary">Cancel</button>
+                    <button id="save-sleep-btn" class="modal-btn primary">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="sleeptracker.js"></script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Detail - VITAHABIT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* CSS Khusus Halaman Ini */
+        .recipe-hero img { width: 100%; border-radius: 15px; margin-bottom: 1em; }
+        .action-btn { 
+            width: 100%; padding: 15px; margin-top: 10px; 
+            border-radius: 25px; border: 1px solid white; 
+            background: transparent; color: white; cursor: pointer; 
+            font-weight: bold;
+        }
+        .action-btn:hover { background: var(--tertiary-color); border-color: var(--tertiary-color); color: black; }
+        #view-video-btn { background-color: transparent; }
+        #add-to-library-btn { background-color: var(--tertiary-color); border: none; color: black; }
+    </style>
+</head>
+<body>
+    <div class="nutrition-page-container">
+        <header class="nutrition-page-header" style="justify-content: flex-start; gap: 1em;">
+            <a href="javascript:history.back()" style="color: white; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div class="nutrition-title-dropdown">Recipe</div>
+        </header>
+
+        <main class="nutrition-content" style="margin-top: 20px;">
+            <div id="recipe-image-placeholder" class="recipe-hero">
+                <p>Loading recipe...</p>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h3 id="recipe-ingredients-title">Ingredients</h3>
+                <div id="recipe-ingredients-placeholder" style="color: #aaa; font-size: 0.9em; line-height: 1.6;"></div>
+
+                <h3 style="margin-top: 20px;">Instructions</h3>
+                <p id="recipe-instructions-placeholder" style="color: #aaa; font-size: 0.9em; line-height: 1.6;"></p>
+            </div>
+
+            <div style="margin-top: 30px; margin-bottom: 50px;">
+                <button id="view-video-btn" class="action-btn">VIEW VIDEO</button>
+                <button id="add-to-library-btn" class="action-btn">ADD TO LIBRARY</button>
+            </div>
+        </main>
+
+        <script type="module" src="mealplan.js"></script>
+    </div>
+</body>
+</html>

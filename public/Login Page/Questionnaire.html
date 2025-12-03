@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Profile - VITAHABIT</title>
+    <link rel="stylesheet" href="loginstyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <main class="login-container" style="max-width: 500px;">
+        <div class="welcome-text">
+            <h2>Let's know you better!</h2>
+            <p style="color: gray; margin-bottom: 2rem;">Help us personalize your plan.</p>
+        </div>
+        <form id="questionnaire-form">
+            
+            <div class="input-group">
+                <label>Gender</label>
+                <select id="q-gender" style="width: 100%; background: transparent; color: white; padding: 10px; border: none; border-bottom: 1px solid #555;">
+                    <option value="Male" style="color: black;">Male</option>
+                    <option value="Female" style="color: black;">Female</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Birthdate</label>
+                <input type="date" id="q-birthdate" style="color: white;" required>
+            </div>
+
+            <div class="input-group">
+                <label>Daily Calorie Goal (kcal)</label>
+                <input type="number" id="q-calories" value="2000" required>
+            </div>
+
+            <div class="input-group">
+                <label>Sleep Goal (hours)</label>
+                <input type="number" id="q-sleep" value="8" step="0.5" required>
+            </div>
+
+            <button type="submit" class="next-btn" style="margin-top: 2rem; width: 100%;">
+                Finish Setup
+            </button>
+        </form>
+    </main>
+    <script type="module" src="auth.js"></script>
+</body>
+</html>
