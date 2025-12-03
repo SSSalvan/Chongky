@@ -1,4 +1,5 @@
-const admin = require("firebase-admin");
+const { admin, db, auth } = require('./index');
+
 const path = require("path");
 const fs = require("fs");
 

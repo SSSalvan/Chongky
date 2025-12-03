@@ -1,7 +1,7 @@
 // FILE: api/meals.js
 const { db, auth, admin } = require('./index');
+const { admin, db, auth } = require('./index');
 
-const admin = require('firebase-admin'); // Butuh ini untuk FieldValue.increment
 
 module.exports = async (req, res) => {
   // 1. Verifikasi Token
