@@ -4,12 +4,21 @@ const admin = require("firebase-admin");
 function formatPrivateKey(key) {
   if (!key) return null;
 
-  // 1. Buang tanda kutip di awal dan akhir jika ada (Penyebab utama error DER bytes)
-  const rawKey = key.replace(/^"|"$/g, '');
+  // 1. Buang tanda kutip di awal dan akhir jika ada
+  let rawKey = key.trim().replace(/^"|"$/g, '');
 
-  // 2. Ganti literal \n menjadi karakter baris baru (newline) asli
-  //    Ini wajib karena di Vercel env var seringkali jadi satu baris panjang
-  return rawKey.replace(/\\n/g, '\n');
+  // 2. Ganti literal \n menjadi karakter newline asli
+  rawKey = rawKey.replace(/\\n/g, '\n');
+
+  // 3. Pastikan format PEM yang benar
+  if (!rawKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+    rawKey = '-----BEGIN PRIVATE KEY-----\n' + rawKey;
+  }
+  if (!rawKey.endsWith('-----END PRIVATE KEY-----')) {
+    rawKey = rawKey + '\n-----END PRIVATE KEY-----';
+  }
+
+  return rawKey;
 }
 
 try {
@@ -17,12 +26,14 @@ try {
   if (!admin.apps.length) {
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    // Panggil fungsi format di sini
     const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
     // Validasi Environment Variables
     if (!projectId || !clientEmail || !privateKey) {
-      console.error("❌ Missing Env Vars: Cek PROJECT_ID, CLIENT_EMAIL, atau PRIVATE_KEY di Vercel.");
+      console.error("❌ Missing Env Vars:");
+      console.error("   - FIREBASE_PROJECT_ID:", projectId ? "✓" : "❌");
+      console.error("   - FIREBASE_CLIENT_EMAIL:", clientEmail ? "✓" : "❌");
+      console.error("   - FIREBASE_PRIVATE_KEY:", privateKey ? "✓" : "❌");
       throw new Error("Konfigurasi Firebase tidak lengkap.");
     }
 
@@ -37,8 +48,7 @@ try {
   }
 } catch (error) {
   console.error("❌ Firebase Init Error:", error.message);
-  // Kita throw error agar Vercel merestart function dan tidak menggantung
-  throw error; 
+  throw error;
 }
 
 const db = admin.firestore();
