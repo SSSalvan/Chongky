@@ -1,17 +1,21 @@
 const admin = require("firebase-admin");
 
+// --- DEBUG CODE (Hapus nanti jika sudah fix) ---
+console.log("--- DEBUG FIREBASE CONFIG ---");
+console.log("Project ID:", process.env.FIREBASE_PROJECT_ID);
+console.log("Client Email:", process.env.FIREBASE_CLIENT_EMAIL);
+// Cek apakah key ada, dan cetak 10 karakter pertamanya saja untuk memastikan format
+const key = process.env.FIREBASE_PRIVATE_KEY;
+console.log("Private Key Status:", key ? `Ada (Panjang: ${key.length}, Awal: ${key.substring(0, 10)}...)` : "TIDAK DITEMUKAN");
+console.log("-------------------------------");
+// ----------------------------------------------
+
 if (!admin.apps.length) {
-  // Ambil private key dari environment variable
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (privateKey) {
-    // 1. Hapus tanda kutip ganda (") di awal dan akhir jika ada
-    // Ini menangani kasus jika Anda tidak sengaja meng-copy tanda kutip dari JSON
-    privateKey = privateKey.replace(/^"|"$/g, '');
-
-    // 2. Ganti karakter literal "\n" dengan baris baru yang asli
-    // Ini sangat penting agar format RSA terbaca benar
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    // Pembersihan format (kode yang sebelumnya sudah kita buat)
+    privateKey = privateKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n');
   }
 
   admin.initializeApp({
