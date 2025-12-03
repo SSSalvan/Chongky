@@ -20,6 +20,10 @@ app.get('/', (req, res) => {
   res.status(200).send('API Sleep Tracker Ready!');
 });
 
+console.log("🔥 ENV CHECK → FIREBASE_CREDENTIALS_BASE64:", 
+  process.env.FIREBASE_CREDENTIALS_BASE64 ? "FOUND" : "NOT FOUND"
+);
+
 // Register Routes
 app.use('/api/community', communityRoute);
 app.use('/api/dashboard', dashboardRoute);
@@ -33,5 +37,6 @@ app.use('/api/users', usersRoute);
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
+
 
 module.exports = app;
