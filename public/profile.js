@@ -13,7 +13,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// 2. Fungsi Load Data Profil (VIA API)
+// 2. Fungsi Load Data Profil (VIA API)sadasd
 async function loadUserProfile(user) {
     try {
         const token = await user.getIdToken();
