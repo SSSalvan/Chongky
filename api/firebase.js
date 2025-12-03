@@ -1,37 +1,61 @@
 const admin = require("firebase-admin");
 
-// --- Helper Formatting Private Key (ROBUST VERSION) ---
+// --- DEBUG & FORMAT Private Key ---
 function formatPrivateKey(key) {
-  if (!key) return null;
+  if (!key) {
+    console.error("❌ Private key is empty!");
+    throw new Error("FIREBASE_PRIVATE_KEY environment variable is not set");
+  }
 
   let rawKey = key.toString().trim();
 
-  // 1. Buang quotes jika ada di awal/akhir
+  // Remove quotes
   rawKey = rawKey.replace(/^["']|["']$/g, '');
 
-  // 2. Ganti escape sequence \n dengan newline asli
+  // Replace escape sequences
   rawKey = rawKey.replace(/\\n/g, '\n');
 
-  // 3. Bersihkan whitespace aneh di akhir baris
+  // CRITICAL: Bersihkan karakter yang tidak valid
+  // Hapus spasi & tab di dalam key
   rawKey = rawKey
     .split('\n')
-    .map(line => line.trim())
+    .map(line => line.replace(/\s+$/, '')) // Hapus whitespace di akhir baris
+    .filter(line => line.length > 0 || line === '') // Keep empty lines
     .join('\n');
 
-  // 4. Pastikan dimulai dengan header yang benar
+  // Pastikan format PEM
   if (!rawKey.includes('-----BEGIN PRIVATE KEY-----')) {
-    throw new Error('Private key harus berformat PEM (BEGIN PRIVATE KEY)');
+    throw new Error('Private key harus dimulai dengan: -----BEGIN PRIVATE KEY-----');
   }
-
-  // 5. Pastikan diakhiri dengan footer
   if (!rawKey.includes('-----END PRIVATE KEY-----')) {
-    throw new Error('Private key harus berformat PEM (END PRIVATE KEY)');
+    throw new Error('Private key harus diakhiri dengan: -----END PRIVATE KEY-----');
   }
 
-  // 6. Hapus karakter extra di akhir
-  rawKey = rawKey.replace(/\n+$/, '\n');
+  // Ekstrak hanya bagian base64
+  const match = rawKey.match(/-----BEGIN PRIVATE KEY-----\s*([\s\S]*?)\s*-----END PRIVATE KEY-----/);
+  if (!match || !match[1]) {
+    throw new Error('Gagal mengekstrak private key dari format PEM');
+  }
 
-  return rawKey;
+  const base64Content = match[1]
+    .replace(/\s/g, '') // Hapus SEMUA whitespace
+    .replace(/[\r\n]/g, ''); // Hapus newline
+
+  // Validasi base64 (harus kelipatan 4)
+  if (base64Content.length % 4 !== 0) {
+    console.error(`❌ Base64 length ${base64Content.length} is not multiple of 4`);
+    throw new Error('Private key base64 encoding is invalid');
+  }
+
+  // Reconstruct dengan format standar (64 chars per line)
+  const formatted = base64Content.match(/.{1,64}/g).join('\n');
+  const finalKey = `-----BEGIN PRIVATE KEY-----\n${formatted}\n-----END PRIVATE KEY-----`;
+
+  console.log("✅ Private key formatted successfully!");
+  console.log(`   Length: ${finalKey.length} bytes`);
+  console.log(`   Base64 content: ${base64Content.length} chars`);
+
+  return finalKey;
 }
 
 try {
@@ -39,6 +63,8 @@ try {
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     
+    console.log("\n📝 Firebase Initialization Starting...\n");
+
     let privateKey;
     try {
       privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
@@ -47,31 +73,40 @@ try {
       throw e;
     }
 
-    // Validasi Environment Variables
+    // Validasi
     if (!projectId || !clientEmail || !privateKey) {
-      console.error("❌ Missing Env Vars:");
-      console.error("   FIREBASE_PROJECT_ID:", projectId ? "✓" : "❌");
-      console.error("   FIREBASE_CLIENT_EMAIL:", clientEmail ? "✓" : "❌");
-      console.error("   FIREBASE_PRIVATE_KEY:", privateKey ? "✓" : "❌");
-      throw new Error("Konfigurasi Firebase tidak lengkap.");
+      console.error("❌ Missing required config:");
+      console.error("   PROJECT_ID:", projectId ? "✓" : "MISSING");
+      console.error("   CLIENT_EMAIL:", clientEmail ? "✓" : "MISSING");
+      console.error("   PRIVATE_KEY:", privateKey ? "✓" : "MISSING");
+      throw new Error("Firebase configuration incomplete");
     }
 
-    console.log("📝 Firebase Config Check:");
-    console.log("   Project ID:", projectId);
-    console.log("   Client Email:", clientEmail);
-    console.log("   Private Key Length:", privateKey.length, "bytes");
+    console.log("✅ Configuration Check:");
+    console.log(`   Project ID: ${projectId}`);
+    console.log(`   Client Email: ${clientEmail}`);
+    console.log(`   Private Key: ${privateKey.length} bytes\n`);
+
+    const credential = admin.credential.cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    });
 
     admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
+      credential,
     });
-    console.log("✅ Firebase initialized successfully");
+
+    console.log("✅✅✅ Firebase initialized successfully! ✅✅✅\n");
   }
 } catch (error) {
-  console.error("❌ Firebase Init Error:", error.message);
+  console.error("\n❌❌❌ Firebase Init Failed ❌❌❌");
+  console.error("Error:", error.message);
+  console.error("\nDEBUG INFO:");
+  console.error("- Check if FIREBASE_PRIVATE_KEY is set correctly");
+  console.error("- Copy from Firebase Console JSON file directly");
+  console.error("- Do NOT modify the private key format");
+  console.error("\n");
   process.exit(1);
 }
 
