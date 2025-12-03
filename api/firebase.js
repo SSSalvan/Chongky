@@ -1,113 +1,85 @@
 const admin = require("firebase-admin");
-
-// --- DEBUG & FORMAT Private Key ---
-function formatPrivateKey(key) {
-  if (!key) {
-    console.error("❌ Private key is empty!");
-    throw new Error("FIREBASE_PRIVATE_KEY environment variable is not set");
-  }
-
-  let rawKey = key.toString().trim();
-
-  // Remove quotes
-  rawKey = rawKey.replace(/^["']|["']$/g, '');
-
-  // Replace escape sequences
-  rawKey = rawKey.replace(/\\n/g, '\n');
-
-  // CRITICAL: Bersihkan karakter yang tidak valid
-  // Hapus spasi & tab di dalam key
-  rawKey = rawKey
-    .split('\n')
-    .map(line => line.replace(/\s+$/, '')) // Hapus whitespace di akhir baris
-    .filter(line => line.length > 0 || line === '') // Keep empty lines
-    .join('\n');
-
-  // Pastikan format PEM
-  if (!rawKey.includes('-----BEGIN PRIVATE KEY-----')) {
-    throw new Error('Private key harus dimulai dengan: -----BEGIN PRIVATE KEY-----');
-  }
-  if (!rawKey.includes('-----END PRIVATE KEY-----')) {
-    throw new Error('Private key harus diakhiri dengan: -----END PRIVATE KEY-----');
-  }
-
-  // Ekstrak hanya bagian base64
-  const match = rawKey.match(/-----BEGIN PRIVATE KEY-----\s*([\s\S]*?)\s*-----END PRIVATE KEY-----/);
-  if (!match || !match[1]) {
-    throw new Error('Gagal mengekstrak private key dari format PEM');
-  }
-
-  const base64Content = match[1]
-    .replace(/\s/g, '') // Hapus SEMUA whitespace
-    .replace(/[\r\n]/g, ''); // Hapus newline
-
-  // Validasi base64 (harus kelipatan 4)
-  if (base64Content.length % 4 !== 0) {
-    console.error(`❌ Base64 length ${base64Content.length} is not multiple of 4`);
-    throw new Error('Private key base64 encoding is invalid');
-  }
-
-  // Reconstruct dengan format standar (64 chars per line)
-  const formatted = base64Content.match(/.{1,64}/g).join('\n');
-  const finalKey = `-----BEGIN PRIVATE KEY-----\n${formatted}\n-----END PRIVATE KEY-----`;
-
-  console.log("✅ Private key formatted successfully!");
-  console.log(`   Length: ${finalKey.length} bytes`);
-  console.log(`   Base64 content: ${base64Content.length} chars`);
-
-  return finalKey;
-}
+const path = require("path");
+const fs = require("fs");
 
 try {
+  // Cek agar tidak init double
   if (!admin.apps.length) {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    
-    console.log("\n📝 Firebase Initialization Starting...\n");
+    let serviceAccount;
 
-    let privateKey;
-    try {
-      privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-    } catch (e) {
-      console.error('❌ Private Key Format Error:', e.message);
-      throw e;
+    // PRIORITY 1: Cek file JSON di root project (untuk local & production)
+    const jsonPaths = [
+      path.join(process.cwd(), "firebase-config.json"),
+      path.join(__dirname, "firebase-config.json"),
+      path.join(__dirname, "../firebase-config.json"),
+    ];
+
+    let foundConfig = false;
+    for (const jsonPath of jsonPaths) {
+      try {
+        if (fs.existsSync(jsonPath)) {
+          serviceAccount = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+          console.log(`✅ Loaded Firebase config from: ${jsonPath}`);
+          foundConfig = true;
+          break;
+        }
+      } catch (e) {
+        console.error(`❌ Error reading ${jsonPath}:`, e.message);
+      }
     }
 
-    // Validasi
-    if (!projectId || !clientEmail || !privateKey) {
-      console.error("❌ Missing required config:");
-      console.error("   PROJECT_ID:", projectId ? "✓" : "MISSING");
-      console.error("   CLIENT_EMAIL:", clientEmail ? "✓" : "MISSING");
-      console.error("   PRIVATE_KEY:", privateKey ? "✓" : "MISSING");
-      throw new Error("Firebase configuration incomplete");
+    // PRIORITY 2: Fallback ke environment variables (untuk Vercel)
+    if (!foundConfig) {
+      console.log("📝 Loading Firebase config from environment variables...");
+
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+      if (!projectId || !clientEmail || !privateKey) {
+        console.error("❌ Missing environment variables:");
+        console.error("   FIREBASE_PROJECT_ID:", projectId ? "✓" : "❌");
+        console.error("   FIREBASE_CLIENT_EMAIL:", clientEmail ? "✓" : "❌");
+        console.error("   FIREBASE_PRIVATE_KEY:", privateKey ? "✓" : "❌");
+        throw new Error("Firebase configuration incomplete");
+      }
+
+      serviceAccount = {
+        projectId,
+        clientEmail,
+        privateKey,
+      };
+
+      console.log("✅ Loaded Firebase config from environment variables");
     }
 
-    console.log("✅ Configuration Check:");
-    console.log(`   Project ID: ${projectId}`);
-    console.log(`   Client Email: ${clientEmail}`);
-    console.log(`   Private Key: ${privateKey.length} bytes\n`);
+    // Validasi serviceAccount
+    if (!serviceAccount || !serviceAccount.project_id || !serviceAccount.private_key) {
+      throw new Error("Invalid Firebase service account configuration");
+    }
 
-    const credential = admin.credential.cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    });
+    console.log("\n📊 Firebase Config Summary:");
+    console.log(`   Project: ${serviceAccount.project_id}`);
+    console.log(`   Email: ${serviceAccount.client_email}`);
+    console.log(`   Key Type: ${serviceAccount.type}\n`);
 
+    // Initialize Firebase
     admin.initializeApp({
-      credential,
+      credential: admin.credential.cert(serviceAccount),
     });
 
     console.log("✅✅✅ Firebase initialized successfully! ✅✅✅\n");
   }
 } catch (error) {
-  console.error("\n❌❌❌ Firebase Init Failed ❌❌❌");
+  console.error("\n❌❌❌ Firebase Initialization Failed ❌❌❌");
   console.error("Error:", error.message);
-  console.error("\nDEBUG INFO:");
-  console.error("- Check if FIREBASE_PRIVATE_KEY is set correctly");
-  console.error("- Copy from Firebase Console JSON file directly");
-  console.error("- Do NOT modify the private key format");
-  console.error("\n");
-  process.exit(1);
+  console.error("\n💡 Solutions:");
+  console.error("1. Place firebase-config.json in project root");
+  console.error("2. OR set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY env vars");
+  console.error("3. Ensure private key has correct \\n formatting\n");
+  
+  // Jangan throw error, let the app start but log warning
+  console.warn("⚠️  Firebase not initialized. API will not work.\n");
 }
 
 const db = admin.firestore();

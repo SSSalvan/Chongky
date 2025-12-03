@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sleeptrackermealplan",
+  "private_key_id": "718c6613b9bcbafdfdea04ed8da8d04b65ea94b5",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCUwnbI+4wtE5DL\nJ7Jdp+1AoEDfWgWZbqY1sanRbqpEGvTZyc8e8o5f0aH8TTeuTKDhuEIOjxxJSR6a\n17SV/nwzf3cXRFkRrm+jN228iccwAn0Cu2fMSwFm1K9yjdRrgZU4IH1qN5jf7SG7\ngk9OR/BRDysYmLXo9rofwUg/hgfXqEiXj7xO2kEZLMcMlwRZUtrkSD06NRQNhZTM\nDoWnld9vQOb7/qn/O+uL0YoVUTo5FUAPuaPISl+4gGRnySvMklQHVWc1dAkM2W2M\nMlLf8T6HEevsPnpopHxoC3Q+bLanEWO+VBVdEtWjxoHxXyAntla++QBW+JkJSt2o\n0INJXE1ZAgMBAAECggEADLsm0NUMXlg4ElbjojXKrXb5jlPlOkgYs+wwSSL0Me9v\nqIrnrbGbAzLM7uuJ2iInO6IaDyZqyI/YLW7L/vFAXmTog4Z/K+72kWyfON0+vYpc\n+gShYb/CjzMhD8f5F7lHlL3dFd/LttBTzHkeweeQttM6QDjjipxA+hI/1WXqWmek\nVHLtIhYJpkJbCaAcimNjGtQwMKAx4PqsdIEieJeVa+yYBMT+k5oVw0GpY8LO532+\nN2hsA8WmzWhe3raw9ZHRn4GdFk2NDn3TTuSQgxf2DE1y10M3MSYp0kHAq6ykvw7Y\nnsAkAry5qpYk3fjGBwapAMbLgMt1sNecNthaKapZ3QKBgQDP9urHnsR03/sIHx3H\nSd7cO7vLD4CYITOMZ+EGi4Qy1obluFaJZ4fPnIlWDdJsoWpL5gioPbDBD2J8tDL1\nbqUaXCw0XnL6C8AWiMPa1ECcbwuTQTDYpDARwPsvEWf68/dY4XG/aFtlrGWrdxqU\nsaTNY/YawXc1NYlEgIl5oR+Z/QKBgQC3HriredeTXI5Ul3+NcAlz9l4vmuOn51H0\ntgjHIqOd8eDFFC/9mlUBu0CkhRiCeSj/rkoMwFk20fWZ4FwW7ggZpYk6JYPgtX8t\nslGAW1xqWgwox3DLF4UoU1nZmUTvBBRc+Flq8iNr732eKQon8iPt6OytwjEMLcvM\nAXGWiIyBjQKBgQCIH1Xj3b83xRfaZAuo02hlfU/ZhUclzK2iHKiFETMx14uqt7Mk\n8zhJI2wdgKSYaDtcfLBz9xVH+Rr9BzJHxemZzHU+vgfCNYjA9zpDdSTpgCHye/xO\nAYJZTJjdYSZPc/sWGVLL97HDZkmSJz6lz3VQ3zpKnxG5KVa1GPFjRJybvQKBgQCb\nOd2M7hHBhtnX9zxWprw8ooEglYmZkMq2R4CVXVWY06qXJQ+xSBv7BcI8M96c6xvH\n8PQwbvSxNbWdpMQrY8dWBi6XLanm17NhByFzTv694GsiPj3syplDn7Qwcm4utiSU\n0qjpsSw5mJ/BbESBrA6s45+Ng2mUS1XQLwEce8+vGQKBgQDHMhkZPogI2qex9G4i\ngmTWNnFIi+6SHq4jerptVjxtsMAYR1hXmLIq5OVWOjQDG3J2OUNxHkbtBT6j98Gr\niSjMuEAdODSM3J9SIev46zFTpWln9bmeiy2PgmYHvTx6ywXLtskcvCT4x4S/aM63\nR1M8pTgWVLkPHxkQWVqYXuq3Kg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@sleeptrackermealplan.iam.gserviceaccount.com",
+  "client_id": "100228727868918368609",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40sleeptrackermealplan.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
