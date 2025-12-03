@@ -1,17 +1,23 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
-  "outputDirectory": "public",
-  "env": {
-    "FIREBASE_PROJECT_ID": "@FIREBASE_PROJECT_ID",
-    "FIREBASE_CLIENT_EMAIL": "@FIREBASE_CLIENT_EMAIL",
-    "FIREBASE_PRIVATE_KEY": "@FIREBASE_PRIVATE_KEY"
-  },
-  "functions": {
-    "api/index.js": {
-      "runtime": "nodejs20.x",
-      "memory": 1024,
-      "maxDuration": 60
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
 }
